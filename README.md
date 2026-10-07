@@ -1,36 +1,23 @@
-# ICT with Janith — Premium GitHub Website
+# ICT with Janith — Premium ICT Learning Platform
 
-A responsive, futuristic single-page website for ICT tuition classes.
+Futuristic Grade 6–11 ICT website + Firebase student results system.
 
-## Tech
-- HTML5
-- CSS3
-- Vanilla JavaScript
-- Google Fonts
-- No build process / no framework
+## Real result system
+- Teacher/Admin login
+- Create students with index number + password
+- Create exams/assessments
+- Enter marks
+- Automatic grade: A >75, B >65, C >50, S >35, F ≤35
+- Automatic rank: highest mark first; equal marks share the same rank
+- Student login with index number + password
+- Student can read only results linked to their own Firebase UID
+- Publish notes, papers and announcements
 
-## Run locally
-Open `index.html` in a browser.
+## URLs
+- Main site: `/`
+- Student Portal: `/student.html`
+- Teacher/Admin: `/admin/`
 
-## GitHub Pages
-1. Create a new public repository, e.g. `ict-with-janith`.
-2. Upload all files and folders.
-3. Repository → Settings → Pages.
-4. Source: **Deploy from a branch**.
-5. Branch: `main` / root.
-6. Save.
-7. Your site will be available at the GitHub Pages URL shown by GitHub.
-
-## Customize
-Class schedule is in `js/classes.js`.
-Main styling is in `css/style.css`.
-
-
-## Pro features added
-- Student Portal (`student.html`)
-- Demo index-number login flow
-- Results / Notes / Papers / Announcements tabs
-- Admin dashboard starter (`admin/index.html`)
-- PWA manifest + service worker
-- Firebase-ready Firestore data architecture
-- Portal UI stylesheet
+## Firebase
+Follow `data/FIREBASE_SETUP.md` and paste the Web App config into `firebase/firebase-config.js`.
+Never commit service-account JSON keys or other server secrets.

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Admin | ICT with Janith</title>
+    
+    <!-- බාහිර CSS ගොනු (External CSS Files) -->
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/portal.css">
+    
+    <!-- අභ්‍යන්තර CSS විලාසයන් (Internal CSS Styling) -->
+    <style>
+        .admin-shell{max-width:1180px;margin:auto;padding:40px 18px 80px}
+        .login-box{max-width:460px;margin:8vh auto}
+        .admin-app{display:grid;gap:20px}
+        .head{display:flex;justify-content:space-between;align-items:center;gap:20px}
+        .head h1{font-size:clamp(38px,6vw,68px);letter-spacing:-3px;margin:8px 0}
+        .section{background:rgba(12,18,37,.78);border:1px solid rgba(130,170,255,.14);border-radius:24px;padding:22px}
+        .tabs{display:flex;gap:8px;flex-wrap:wrap}
+        .tabs button{background:#0c1327;color:#9ba8c0;border:1px solid #26304a;padding:10px 14px;border-radius:10px}
+        .tabs button.active{color:#fff;border-color:#4edfff}
+        .panel{display:none}
+        .panel.active{display:block}
+        .form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+        .form input,.form select,.form textarea,.mark-input{box-sizing:border-box;width:100%;background:#090f1e;border:1px solid #29344d;color:#fff;border-radius:11px;padding:12px;font:inherit}
+        .form textarea{grid-column:1/-1;min-height:100px}
+        .table-wrap{overflow:auto;margin-top:18px}
+        .admin-table{width:100%;min-width:650px;border-collapse:collapse}
+        .admin-table th,.admin-table td{text-align:left;padding:12px;border-bottom:1px solid rgba(255,255,255,.08)}
+        .admin-table th{font-size:11px;color:#8290aa;letter-spacing:1px}
+        .admin-table small{display:block;color:#78869f}
+        .stat{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+        .mini-btn{background:transparent;border:1px solid #51313a;color:#ff9eaa;padding:6px 9px;border-radius:8px}
+        .note{color:#a4aec0;font-size:13px}.birthday-admin-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:18px}.birthday-admin-card{display:flex;gap:12px;align-items:center;padding:14px;border:1px solid rgba(130,170,255,.14);border-radius:16px;background:#0b1122}.birthday-admin-card img{width:54px;height:54px;border-radius:14px;object-fit:cover;background:#121a2e}.birthday-admin-card b{display:block}.birthday-admin-card small{color:#8490a8}
+        
+        /* මොබයිල් / කුඩා තිර සඳහා responsive Styling */
+        @media(max-width:760px){
+            .form{grid-template-columns:1fr}
+            .stat{grid-template-columns:1fr}
+            .head{align-items:flex-start;flex-direction:column}
+        }
+    </style>
+</head>
+<body class="portal-page">
+    <main class="admin-shell">
+        
+        <!-- ==========================================
+             1. ඇඩ්මින් ලොගින් පෝරමය (Admin Login Section)
+             ========================================== -->
+        <section id="adminLogin">
+            <div class="login-box">
+                <div class="mini-icon">⚡</div>
+                <div class="section-tag">TEACHER / ADMIN</div>
+                <h1>Control Center</h1>
+                <p>Secure teacher dashboard.</p>
+                
+                <!-- ලොගින් පණිවිඩ පෙන්වන ස්ථානය -->
+                <div id="adminMessage" class="auth-message" hidden></div>
+                
+                <!-- ඇඩ්මින් ලොගින් Form එක -->
+                <form id="adminLoginForm">
+                    <label>ADMIN EMAIL
+                        <input id="adminEmail" type="email" required>
+                    </label>
+                    <label>ADMIN PASSWORD
+                        <input id="adminPassword" type="password" required>
+                    </label>
+                    <button class="btn btn-primary" type="submit">Secure Login →</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             2. ඇඩ්මින් පාලන පුවරුව (Main Admin Dashboard App)
+             ========================================== -->
+        <section id="adminApp" class="admin-app" hidden>
+            
+            <!-- හිස (Header Section) -->
+            <header class="head">
+                <div>
+                    <div class="section-tag">ICT WITH ජනිත් • ADMIN</div>
+                    <h1>Control <span style="color:#59e8ff">Center.</span></h1>
+                    <p>Teacher → Marks → Grade → Rank → Student</p>
+                </div>
+                <button id="adminLogout" class="btn btn-ghost">Logout</button>
+            </header>
+
+            <!-- දත්ත/සංඛ්‍යාලේඛන පෙන්වන කාඩ්පත් (Stats Cards) -->
+            <div class="stat">
+                <div class="data-card">
+                    <small>STUDENTS</small>
+                    <strong id="studentCount">0</strong>
+                    <p>Active profiles</p>
+                </div>
+                <div class="data-card">
+                    <small>RESULT ENGINE</small>
+                    <strong>ON</strong>
+                    <p>Grade + rank</p>
+                </div>
+                <div class="data-card">
+                    <small>PRIVATE VIEW</small>
+                    <strong>UID</strong>
+                    <p>Student-only results</p>
+                </div>
+            </div>
+
+            <!-- ටැබ් බොත්තම් (Navigation Tabs) -->
+            <div class="tabs">
+                <button class="active" data-p="students">Students</button>
+                <button data-p="marks">Marks & Rank</button>
+                <button data-p="resources">Notes / Papers</button>
+                <button data-p="announcements">Announcements</button>
+                <button data-p="birthdays">🎂 Birthdays</button>
+            </div>
+
+            <!-- ------------------------------------------
+                 2.1 සිසුන් කළමනාකරණය (Students Tab)
+                 ------------------------------------------ -->
+            <section id="students" class="section panel active">
+                <h2>Student Management</h2>
+                
+                <!-- සිසුවෙකු ඇතුළත් කිරීමේ Form එක -->
+                <form id="studentForm" class="form">
+                    <input id="sName" placeholder="Student name" required>
+                    <input id="sIndex" placeholder="Index e.g. ICT004" required>
+                    <select id="sGrade">
+                        <option>Grade 06</option>
+                        <option>Grade 07</option>
+                        <option>Grade 08</option>
+                        <option>Grade 09</option>
+                        <option>Grade 10</option>
+                        <option>Grade 11</option>
+                    </select>
+                    <input id="sBirthDate" type="date" aria-label="Student birthday" required>
+                    <input id="sPhoto" type="file" accept="image/jpeg,image/png,image/webp" aria-label="Student photo">
+                    <input id="sPassword" type="password" minlength="6" placeholder="Student password (6+)" required>
+                    <button id="createStudentBtn" class="btn btn-primary" type="submit">+ Create Student</button>
+                </form>
+
+                <!-- සිසුන් සෙවීමේ කොටස -->
+                <label>SEARCH
+                    <input id="studentSearch" placeholder="Name / index / grade">
+                </label>
+                <p class="note">🎂 Birthday + photo are used for the student profile and the public “Today’s Birthday” post. Use photos only with the student/guardian’s permission.</p>
+
+                <!-- සිසුන්ගේ ලැයිස්තු වගුව (Student Table) -->
+                <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>NAME</th>
+                                <th>INDEX</th>
+                                <th>GRADE</th>
+                                <th>ACTION</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentTable"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ------------------------------------------
+                 2.2 ලකුණු සහ ශ්‍රේණිගත කිරීම් (Marks & Rank Tab)
+                 ------------------------------------------ -->
+            <section id="marks" class="section panel">
+                <h2>Marks & Automatic Ranking</h2>
+                
+                <!-- විභාගයක් සෑදීමේ Form එක -->
+                <form id="examForm" class="form">
+                    <input id="examName" placeholder="Assessment / Exam name" required>
+                    <select id="examGrade">
+                        <option>Grade 06</option>
+                        <option>Grade 07</option>
+                        <option>Grade 08</option>
+                        <option>Grade 09</option>
+                        <option>Grade 10</option>
+                        <option>Grade 11</option>
+                    </select>
+                    <button class="btn btn-primary" type="submit">+ Create Exam</button>
+                </form>
+
+                <!-- විභාගය තේරීමේ කොටස -->
+                <label>SELECT EXAM
+                    <select id="examSelect"></select>
+                </label>
+
+                <!-- ලකුණු ඇතුළත් කිරීමේ වගුව -->
+                <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>STUDENT</th>
+                                <th>MARK / 100</th>
+                                <th>GRADE</th>
+                            </tr>
+                        </thead>
+                        <tbody id="marksTable"></tbody>
+                    </table>
+                </div>
+                
+                <button id="saveMarksBtn" class="btn btn-primary">Save Marks + Calculate Rank →</button>
+                <p class="note">A &gt;75 • B &gt;65 • C &gt;50 • S &gt;35 • F ≤35. Equal marks share the same rank.</p>
+            </section>
+
+            <!-- ------------------------------------------
+                 2.3 සටහන් සහ ප්‍රශ්න පත්‍ර (Resources Tab)
+                 ------------------------------------------ -->
+            <section id="resources" class="section panel">
+                <h2>Publish Notes / Papers</h2>
+                
+                <!-- සටහන්/ප්‍රශ්න පත්‍ර පළකිරීමේ Form එක -->
+                <form id="resourceForm" class="form">
+                    <input id="rTitle" placeholder="Resource title" required>
+                    <select id="rGrade">
+                        <option>Grade 06</option>
+                        <option>Grade 07</option>
+                        <option>Grade 08</option>
+                        <option>Grade 09</option>
+                        <option>Grade 10</option>
+                        <option>Grade 11</option>
+                    </select>
+                    <select id="rType">
+                        <option value="note">Note</option>
+                        <option value="paper">Paper</option>
+                    </select>
+                    <input id="rUrl" placeholder="PDF / Drive URL" required>
+                    <button class="btn btn-primary" type="submit">Publish</button>
+                </form>
+
+                <!-- පළකළ ද්‍රව්‍ය ලැයිස්තු වගුව -->
+                <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>TITLE</th>
+                                <th>GRADE</th>
+                                <th>TYPE</th>
+                                <th>STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resourceTable"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ------------------------------------------
+                 2.4 දැනුම්දීම් (Announcements Tab)
+                 ------------------------------------------ -->
+            <section id="announcements" class="section panel">
+                <h2>Announcements</h2>
+                
+                <!-- දැනුම්දීම් පළකිරීමේ Form එක -->
+                <form id="announcementForm" class="form">
+                    <input id="aTitle" placeholder="Title" required>
+                    <textarea id="aBody" placeholder="Message" required></textarea>
+                    <button class="btn btn-primary" type="submit">Publish Announcement</button>
+                </form>
+
+                <!-- පළකළ දැනුම්දීම් ලැයිස්තු වගුව -->
+                <div class="table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>TITLE</th>
+                                <th>STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="announcementTable"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="birthdays" class="section panel">
+                <h2>🎂 Birthday Posts</h2>
+                <p class="note">Students with a birthday today will automatically appear on the main website. The birthday directory stores only month/day, name, grade and photo — not the birth year.</p>
+                <div id="birthdayAdminList" class="birthday-admin-list"></div>
+            </section>
+
+        </section>
+    </main>
+
+    <!-- ==========================================
+         3. JavaScript ගොනු සහ Scripts (JS Logic)
+         ========================================== -->
+    <!-- Firebase මොඩියුල Script එක -->
+    <script type="module" src="../js/admin-firebase.js"></script>
+
+    <!-- ටැබ්ස් (Tabs) මාරු කිරීම සඳහා වන JavaScript කේතය -->
+    <script>
+        document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+            document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));
+            b.classList.add('active');
+            document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+            document.getElementById(b.dataset.p).classList.add('active')
+        });
+    </script>
+</body>
+</html>

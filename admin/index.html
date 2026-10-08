@@ -22,6 +22,8 @@
         .tabs button.active{color:#fff;border-color:#4edfff}
         .panel{display:none}
         .panel.active{display:block}
+        /* IMPORTANT: hidden sections must stay hidden even when .admin-app sets display:grid */
+        #adminApp[hidden], #adminLogin[hidden]{display:none !important}
         .form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
         .form input,.form select,.form textarea,.mark-input{box-sizing:border-box;width:100%;background:#090f1e;border:1px solid #29344d;color:#fff;border-radius:11px;padding:12px;font:inherit}
         .form textarea{grid-column:1/-1;min-height:100px}

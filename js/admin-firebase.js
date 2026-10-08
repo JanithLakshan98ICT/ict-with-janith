@@ -8,7 +8,7 @@ import {studentEmail} from "../firebase/auth.js";
 const creatorAuth=getAuth(initializeApp(firebaseConfig,'studentCreator')); const $=id=>document.getElementById(id);let students=[],exams=[];
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));const grade=m=>m>75?'A':m>65?'B':m>50?'C':m>35?'S':'F';
 const msg=(m,t='info')=>{const e=$('adminMessage');e.textContent=m;e.className='auth-message '+t;e.hidden=false};
-async function admin(uid){const s=await getDoc(doc(db,'admins',uid));return s.exists()&&s.data().active!==false}
+async function admin(uid){const s=await getDoc(doc(db,'admins',uid));return s.exists() && s.data().active === true}
 async function refresh(){const s=await getDocs(query(collection(db,'students'),orderBy('name')));students=s.docs.map(d=>({uid:d.id,...d.data()}));$('studentCount').textContent=students.length;renderStudents();await loadExams();await loadResources();await loadAnnouncements();await loadBirthdayDirectory()}
 function renderStudents(){const q=($('studentSearch').value||'').toLowerCase();$('studentTable').innerHTML=students.filter(s=>`${s.name} ${s.indexNumber} ${s.grade}`.toLowerCase().includes(q)).map(s=>`<tr><td><b>${esc(s.name)}</b></td><td>${esc(s.indexNumber)}</td><td>${esc(s.grade)}</td><td><button class="mini-btn" data-del="${s.uid}">Delete</button></td></tr>`).join('')||'<tr><td colspan="4">No students.</td></tr>';document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteStudent(b.dataset.del))}
 async function loadExams(){const s=await getDocs(query(collection(db,'exams'),orderBy('createdAt','desc')));exams=s.docs.map(d=>({id:d.id,...d.data()}));$('examSelect').innerHTML=exams.map(x=>`<option value="${esc(x.id)}">${esc(x.name)} — ${esc(x.grade)}</option>`).join('')||'<option value="">Create an exam first</option>';await renderMarks()}
@@ -24,4 +24,13 @@ $('examForm').onsubmit=async e=>{e.preventDefault();await setDoc(doc(db,'exams',
 $('saveMarksBtn').onclick=async()=>{const ex=exams.find(x=>x.id===$('examSelect').value);if(!ex)return;const rows=[...document.querySelectorAll('.mark-input')].filter(x=>x.value!=='').map(x=>({uid:x.dataset.uid,marks:Number(x.value)}));const rank=[...rows].sort((a,b)=>b.marks-a.marks),rankMap=new Map();rank.forEach((x,i)=>{if(!rankMap.has(x.marks))rankMap.set(x.marks,i+1)});const b=writeBatch(db);rows.forEach(x=>{const s=students.find(a=>a.uid===x.uid);b.set(doc(db,'results',`${ex.id}_${x.uid}`),{studentUid:x.uid,indexNumber:s.indexNumber,studentName:s.name,gradeLevel:s.grade,examId:ex.id,examName:ex.name,assessment:ex.name,marks:x.marks,percentage:x.marks,grade:grade(x.marks),pass:x.marks>35,rank:rankMap.get(x.marks),totalStudents:rows.length,createdAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true})});await b.commit();msg(`${rows.length} students: grade + rank automatically calculated.`,'success');await renderMarks()};
 $('resourceForm').onsubmit=async e=>{e.preventDefault();await setDoc(doc(collection(db,'resources')),{title:$('rTitle').value.trim(),grade:$('rGrade').value,type:$('rType').value,url:$('rUrl').value.trim(),active:true,publishedAt:serverTimestamp()});e.target.reset();msg('Resource published.','success');await loadResources()};
 $('announcementForm').onsubmit=async e=>{e.preventDefault();await setDoc(doc(collection(db,'announcements')),{title:$('aTitle').value.trim(),body:$('aBody').value.trim(),active:true,publishedAt:serverTimestamp()});e.target.reset();msg('Announcement published.','success');await loadAnnouncements()};
-if(!isFirebaseConfigured)msg('Firebase config missing. firebase/firebase-config.js update කරන්න.','warn');else onAuthStateChanged(getAuth(app),async u=>{if(!u){$('adminLogin').hidden=false;$('adminApp').hidden=true;return}if(await admin(u.uid)){$('adminLogin').hidden=true;$('adminApp').hidden=false;await refresh()}else{await signOut(getAuth(app));msg('මෙම account එකට Admin access නැහැ.','error')}});
+$('adminLogin').hidden=true; $('adminApp').hidden=true;
+if(!isFirebaseConfigured){ $('adminLogin').hidden=false; msg('Firebase config missing. firebase/firebase-config.js update කරන්න.','warn'); }
+else onAuthStateChanged(getAuth(app),async u=>{
+  if(!u){ $('adminApp').hidden=true; $('adminLogin').hidden=false; return; }
+  $('adminLogin').hidden=true; $('adminApp').hidden=true;
+  try{
+    if(await admin(u.uid)){ $('adminApp').hidden=false; await refresh(); }
+    else { await signOut(getAuth(app)); $('adminLogin').hidden=false; msg('මෙම account එකට Admin access නැහැ.','error'); }
+  }catch(err){ $('adminApp').hidden=true; $('adminLogin').hidden=false; msg('Admin access check failed. Firestore Rules / admins UID පරීක්ෂා කරන්න.','error'); console.error(err); }
+});

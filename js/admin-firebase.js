@@ -354,18 +354,16 @@ if (!isFirebaseConfigured) {
         $('adminLogin').hidden = false;
         msg('මෙම account එකට Admin access නැහැ.', 'error');
       }
-    } 
-catch(err) {
-  $('adminApp').hidden = true;
-  $('adminLogin').hidden = false;
+    } catch (err) {
+      $('adminApp').hidden = true;
+      $('adminLogin').hidden = false;
 
-  console.error('Admin dashboard error:', err.code, err.message);
+      console.error('Admin dashboard error:', err.code, err.message);
 
-  msg(
-    `Dashboard error: ${err.code || 'unknown'} — ${err.message || 'Unknown error'}`,
-    'error'
-  );
-}
-
+      msg(
+        `Dashboard error: ${err.code || 'unknown'} — ${err.message || 'Unknown error'}`,
+        'error'
+      );
+    }
   });
 }

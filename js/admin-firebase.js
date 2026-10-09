@@ -71,15 +71,21 @@ async function refresh() {
 }
 
 function renderStudents() {
-  const q = ($('studentSearch').value \vert{}\vert{} '').toLowerCase();$('studentTable').innerHTML = students
-    .filter(s => `${s.name} ${s.indexNumber} ${s.grade}`.toLowerCase().includes(q))
-    .map(s => `<tr>
+  const inputVal = $('studentSearch').value;
+  const q = (inputVal ? inputVal : '').toLowerCase();
+  
+  const filtered = students.filter(s => `${s.name} ${s.indexNumber} ${s.grade}`.toLowerCase().includes(q));
+  
+  if (filtered.length > 0) {
+    $('studentTable').innerHTML = filtered.map(s => `<tr>
       <td><b>${esc(s.name)}</b></td>
       <td>${esc(s.indexNumber)}</td>
       <td>${esc(s.grade)}</td>
       <td><button class="mini-btn" data-del="${s.uid}">Delete</button></td>
-    </tr>`)
-    .join('') || '<tr><td colspan="4">No students.</td></tr>';
+    </tr>`).join('');
+  } else {
+    $('studentTable').innerHTML = '<tr><td colspan="4">No students.</td></tr>';
+  }
 
   document.querySelectorAll('[data-del]').forEach(b => {
     b.onclick = () => deleteStudent(b.dataset.del);
@@ -90,9 +96,11 @@ async function loadExams() {
   const s = await getDocs(query(collection(db, 'exams'), orderBy('createdAt', 'desc')));
   exams = s.docs.map(d => ({ id: d.id, ...d.data() }));
   
-  $('examSelect').innerHTML = exams
-    .map(x => `<option value="${esc(x.id)}">${esc(x.name)} — ${esc(x.grade)}</option>`)
-    .join('') || '<option value="">Create an exam first</option>';
+  if (exams.length > 0) {
+    $('examSelect').innerHTML = exams.map(x => `<option value="${esc(x.id)}">${esc(x.name)} — ${esc(x.grade)}</option>`).join('');
+  } else {
+    $('examSelect').innerHTML = '<option value="">Create an exam first</option>';
+  }
 
   await renderMarks();
 }
@@ -109,14 +117,18 @@ async function renderMarks() {
   s.forEach(d => old[d.data().studentUid] = d.data());
 
   const list = students.filter(x => x.grade === ex.grade);
-  $('marksTable').innerHTML = list.map(x => {
-    const r = old[x.uid] || {};
-    return `<tr>
-      <td><b>${esc(x.name)}</b><small>${esc(x.indexNumber)}</small></td>
-      <td><input class="mark-input" data-uid="${x.uid}" type="number" min="0" max="100" value="${r.marks ?? ''}"></td>
-      <td data-g="${x.uid}">${r.grade || '—'}</td>
-    </tr>`;
-  }).join('') || '<tr><td colspan="3">No students in this grade.</td></tr>';
+  if (list.length > 0) {
+    $('marksTable').innerHTML = list.map(x => {
+      const r = old[x.uid] ?? {};
+      return `<tr>
+        <td><b>${esc(x.name)}</b><small>${esc(x.indexNumber)}</small></td>
+        <td><input class="mark-input" data-uid="${x.uid}" type="number" min="0" max="100" value="${r.marks ?? ''}"></td>
+        <td data-g="${x.uid}">${r.grade ?? '—'}</td>
+      </tr>`;
+    }).join('');
+  } else {
+    $('marksTable').innerHTML = '<tr><td colspan="3">No students in this grade.</td></tr>';
+  }
 
   document.querySelectorAll('.mark-input').forEach(i => {
     i.oninput = () => {
@@ -134,35 +146,45 @@ async function deleteStudent(uid) {
 
 async function loadBirthdayDirectory() {
   const s = await getDocs(query(collection(db, 'birthdayDirectory'), orderBy('monthDay')));
-  $('birthdayAdminList').innerHTML = s.empty
-    ? '<div class="empty-card">No birthday profiles yet.</div>'
-    : s.docs.map(d => {
-        const x = d.data();
-        return `<div class="birthday-admin-card">
-          <img src="${esc(x.photoUrl || '')}" alt="" onerror="this.style.display='none'">
-          <div><b>${esc(x.name)}</b><small>${esc(x.grade)} • ${esc(x.monthDay)}</small></div>
-        </div>`;
-      }).join('');
+  if (s.empty) {
+    $('birthdayAdminList').innerHTML = '<div class="empty-card">No birthday profiles yet.</div>';
+  } else {
+    $('birthdayAdminList').innerHTML = s.docs.map(d => {
+      const x = d.data();
+      return `<div class="birthday-admin-card">
+        <img src="${esc(x.photoUrl ?? '')}" alt="" onerror="this.style.display='none'">
+        <div><b>${esc(x.name)}</b><small>${esc(x.grade)} • ${esc(x.monthDay)}</small></div>
+      </div>`;
+    }).join('');
+  }
 }
 
 async function loadResources() {
   const s = await getDocs(query(collection(db, 'resources'), orderBy('publishedAt', 'desc')));
-  $('resourceTable').innerHTML = s.docs.map(d => {
-    const x = d.data();
-    return `<tr>
-      <td>${esc(x.title)}</td>
-      <td>${esc(x.grade)}</td>
-      <td>${esc(x.type)}</td>
-      <td>${x.active ? 'Published' : 'Hidden'}</td>
-    </tr>`;
-  }).join('') || '<tr><td colspan="4">No resources.</td></tr>';
+  if (s.docs.length > 0) {
+    $('resourceTable').innerHTML = s.docs.map(d => {
+      const x = d.data();
+      return `<tr>
+        <td>${esc(x.title)}</td>
+        <td>${esc(x.grade)}</td>
+        <td>${esc(x.type)}</td>
+        <td>${x.active ? 'Published' : 'Hidden'}</td>
+      </tr>`;
+    }).join('');
+  } else {
+    $('resourceTable').innerHTML = '<tr><td colspan="4">No resources.</td></tr>';
+  }
 }
 
 async function loadAnnouncements() {
   const s = await getDocs(query(collection(db, 'announcements'), orderBy('publishedAt', 'desc')));
-  $('announcementTable').innerHTML = s.docs.map(d => 
-    `<tr><td>${esc(d.data().title)}</td><td>${d.data().active ? 'Published' : 'Hidden'}</td></tr>`
-  ).join('') || '<tr><td colspan="2">No announcements.</td></tr>';
+  if (s.docs.length > 0) {
+    $('announcementTable').innerHTML = s.docs.map(d => 
+      `<tr><td>${esc(d.data().title)}</td><td>${d.data().active ? 'Published' : 'Hidden'}</td></tr>`
+    ).join('');
+  } else {
+    $('announcementTable').innerHTML = '<tr><td colspan="2">No announcements.</td></tr>';
+  }
 }
 
 // Event Listeners
@@ -203,7 +225,7 @@ $('studentForm').onsubmit = async e => {
     let photoUrl = '';
 
     if (photo) {
-      const ext = (photo.name.split('.').pop() || 'jpg').toLowerCase();
+      const ext = (photo.name.split('.').pop() ?? 'jpg').toLowerCase();
       const storageRef = ref(storage, `student-photos/${c.user.uid}/profile.${ext}`);
       await uploadBytes(storageRef, photo, { contentType: photo.type });
       photoUrl = await getDownloadURL(storageRef);
@@ -354,16 +376,11 @@ if (!isFirebaseConfigured) {
         $('adminLogin').hidden = false;
         msg('මෙම account එකට Admin access නැහැ.', 'error');
       }
-    } catch (err) {
+    } catch(err) {
       $('adminApp').hidden = true;
       $('adminLogin').hidden = false;
-
       console.error('Admin dashboard error:', err.code, err.message);
-
-      msg(
-        `Dashboard error: ${err.code || 'unknown'} — ${err.message || 'Unknown error'}`,
-        'error'
-      );
+      msg(`Dashboard error: ${err.code ?? 'unknown'} — ${err.message ?? 'Unknown error'}`, 'error');
     }
   });
 }
